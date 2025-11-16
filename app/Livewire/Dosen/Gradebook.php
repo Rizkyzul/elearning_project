@@ -4,6 +4,7 @@ namespace App\Livewire\Dosen;
 
 use Livewire\Component;
 use App\Models\Matkul;
+use App\Models\Kelas;
 use App\Models\Mahasiswa;
 use App\Models\Nilai;
 use Illuminate\Validation\Rule;
@@ -12,31 +13,31 @@ class Gradebook extends Component
 {
     // Properti publik
     public Matkul $matkul;
+    public Kelas $kelas; 
     public $mahasiswaList;
-    
-    // Properti ini akan di-'bind' ke input di view
-    // Format: $nilaiData[mahasiswa_id][jenis_nilai]
     public $nilaiData = [];
 
     /**
      * Method 'mount' berjalan saat komponen pertama kali di-load.
-     * Mirip dengan __construct().
      */
-    public function mount(Matkul $matkul)
+    public function mount(Matkul $matkul, Kelas $kelas)
     {
         $this->matkul = $matkul;
+        $this->kelas = $kelas; 
         
-        // Ambil daftar mahasiswa yang terdaftar di matkul ini
-        $this->mahasiswaList = $matkul->mahasiswa()
-                                     ->with('user') // Ambil relasi 'user' untuk nama
+        // --- INI PERBAIKANNYA ---
+        // Kita ambil mahasiswa HANYA DARI KELAS yang dipilih.
+        $this->mahasiswaList = $this->kelas->mahasiswa()
+                                     ->with('user')
                                      ->orderBy('nim')
                                      ->get();
+        // -------------------------
 
         // Ambil nilai yang SUDAH ADA di database
         $nilaiSudahAda = Nilai::where('matkul_id', $this->matkul->id)
                               ->whereIn('mahasiswa_id', $this->mahasiswaList->pluck('id'))
                               ->get()
-                              ->keyBy('mahasiswa_id'); // Jadikan ID mahasiswa sebagai key
+                              ->keyBy('mahasiswa_id');
 
         // Isi properti $nilaiData dengan nilai yang sudah ada
         foreach ($this->mahasiswaList as $mahasiswa) {
@@ -51,40 +52,29 @@ class Gradebook extends Component
     }
 
     /**
-     * Hook 'updated' ini berjalan SETIAP KALI properti publik berubah
-     * (misal: saat Dosen mengetik di input)
-     */
-    /**
      * Hook ini berjalan SETIAP KALI properti publik berubah
-     * (method SUDAH DIPERBAIKI)
      */
     public function updatedNilaiData($value, $key)
     {
-        // $key akan berisi string seperti "12.uts" (mahasiswa_id.jenis_nilai)
         [$mahasiswaId, $jenisNilai] = explode('.', $key);
 
-        // Validasi cepat
         $validatedValue = trim($value) === '' ? null : (float) $value;
         if ($validatedValue !== null && ($validatedValue < 0 || $validatedValue > 100)) {
             $this->addError('nilaiData.' . $key, 'Nilai harus antara 0-100.');
             return;
         }
 
-        // Hapus error jika valid
         $this->resetErrorBag('nilaiData.' . $key);
 
-        // ===== INI ADALAH PERBAIKAN PENTING =====
-        // "Terjemahkan" key singkat (tugas, uts) ke nama kolom DB (nilai_tugas, nilai_uts)
         $kolomDb = match ($jenisNilai) {
             'tugas' => 'nilai_tugas',
             'uts'   => 'nilai_uts',
             'uas'   => 'nilai_uas',
-            default => $jenisNilai, // Fallback (seharusnya tidak terjadi)
+            default => $jenisNilai,
         };
-        // =========================================
 
-        // Gunakan $kolomDb (nama yang benar) untuk menyimpan
-        Nilai::updateOrCreate(
+        // Simpan ke database
+        $nilai = Nilai::updateOrCreate(
             [
                 'mahasiswa_id' => $mahasiswaId,
                 'matkul_id'    => $this->matkul->id
@@ -93,7 +83,34 @@ class Gradebook extends Component
                 $kolomDb => $validatedValue 
             ]
         );
+
+        // --- Logika Perhitungan Nilai Akhir ---
+        $W_TUGAS = 0.40; $W_UTS = 0.30; $W_UAS = 0.30;
+
+        $isReadyToGrade = 
+            !is_null($nilai->nilai_tugas) && 
+            !is_null($nilai->nilai_uts) && 
+            !is_null($nilai->nilai_uas);
+
+        if ($isReadyToGrade) {
+            $nilaiAkhir = round(
+                ($nilai->nilai_tugas * $W_TUGAS) +
+                ($nilai->nilai_uts * $W_UTS) +
+                ($nilai->nilai_uas * $W_UAS)
+            );
+            
+            if ($nilaiAkhir >= 80) $grade = 'A';
+            elseif ($nilaiAkhir >= 70) $grade = 'B';
+            elseif ($nilaiAkhir >= 60) $grade = 'C';
+            elseif ($nilaiAkhir >= 50) $grade = 'D';
+            else $grade = 'E';
+            
+            $nilai->update(['nilai_akhir' => $nilaiAkhir, 'grade' => $grade]);
+        } else {
+            $nilai->update(['nilai_akhir' => null, 'grade' => null]);
+        }
     }
+
     /**
      * Method 'render' menampilkan view.
      */

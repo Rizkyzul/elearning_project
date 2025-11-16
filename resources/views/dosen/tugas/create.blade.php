@@ -111,4 +111,53 @@
             </div>
         </div>
     </div>
+    {{-- ================= SWEETALERT ================= --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{{-- SUCCESS --}}
+@if (session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        html: `{!! session('success') !!}`,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'OK'
+    });
+</script>
+@endif
+
+{{-- ERROR --}}
+@if (session('error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Terjadi Kesalahan',
+        html: `{!! session('error') !!}`,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Tutup'
+    });
+</script>
+@endif
+
+{{-- VALIDATION ERRORS --}}
+@if ($errors->any())
+<script>
+    let validations = `
+        <ul class="text-left">
+            @foreach ($errors->all() as $err)
+                <li>• {!! $err !!}</li>
+            @endforeach
+        </ul>
+    `;
+    Swal.fire({
+        icon: 'warning',
+        title: 'Validasi Gagal',
+        html: validations,
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'Perbaiki'
+    });
+</script>
+@endif
+
 </x-app-layout>

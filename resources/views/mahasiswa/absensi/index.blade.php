@@ -14,16 +14,14 @@
                     <span class="font-medium">{{ session('success') }}</span>
                 </div>
             @endif
-
             @if (session('error'))
                 <div class="mb-4 flex items-center gap-3 p-4 text-red-800 bg-red-100 border border-red-200 rounded-xl shadow-sm">
                     <span class="font-medium">{{ session('error') }}</span>
                 </div>
             @endif
-
+            
             <div class="bg-white shadow-lg rounded-2xl border border-gray-100 overflow-hidden">
                 <div class="p-6 text-gray-900">
-
                     <div class="mb-5">
                         <h3 class="text-lg font-semibold text-gray-700 mb-1">
                             Arahkan Kamera
@@ -35,7 +33,7 @@
 
                     <div class="relative">
                         <div id="qr-reader" 
-                             class="w-full rounded-xl border border-gray-200 shadow-inner bg-gray-50">
+                             class="w-full rounded-xl border border-gray-200 shadow-inner bg-gray-90">
                         </div>
                     </div>
 
@@ -46,9 +44,61 @@
                         @csrf
                         <input type="hidden" id="qr-code-result" name="qr_code">
                     </form>
-
                 </div>
             </div>
+
+
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                    Histori Absensi Anda
+                </h3>
+                
+                <div class="bg-white shadow-lg rounded-2xl border border-gray-100 overflow-hidden">
+                    <div class="p-6 text-gray-900">
+                        @if ($historiAbsen->isEmpty())
+                            <p class="text-center text-gray-500">Anda belum memiliki histori absensi.</p>
+                        @else
+                            <ul class="divide-y divide-gray-200">
+                                @foreach ($historiAbsen as $absen)
+                                    <li class="py-4 flex justify-between items-center">
+                                        <div>
+                                            <p class="font-semibold text-gray-800">
+                                                {{ $absen->sesiPerkuliahan->matkul->nama_matkul ?? 'Mata Kuliah Dihapus' }}
+                                            </p>
+                                            <p class="text-sm text-gray-600">
+                                                Pertemuan ke-{{ $absen->sesiPerkuliahan->pertemuan_ke }} 
+                                                <span class="text-gray-400 mx-1">|</span>
+                                                {{ $absen->created_at->format('d M Y') }}
+                                            </p>
+                                        </div>
+                                        
+                                        <div>
+                                            @if ($absen->scan_masuk && $absen->scan_keluar)
+                                                @if ($absen->status == 'terlambat')
+                                                    <span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">Terlambat</span>
+                                                @else
+                                                    <span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Hadir</span>
+                                                @endif
+                                            @elseif ($absen->scan_masuk && !$absen->scan_keluar)
+                                                <span class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">Masuk Saja</span>
+                                            @elseif (!$absen->scan_masuk && $absen->scan_keluar)
+                                                <span class="px-2 py-1 text-xs font-semibold text-purple-800 bg-purple-100 rounded-full">Keluar Saja</span>
+                                            @else
+                                                <span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Absen</span>
+                                            @endif
+                                        </div>
+                                        </li>
+                                @endforeach
+                            </ul>
+                            
+                            <div class="mt-6">
+                                {{ $historiAbsen->links() }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 
@@ -57,21 +107,35 @@
 
     <script>
         function onScanSuccess(decodedText, decodedResult) {
-            document.getElementById('qr-code-result').value = decodedText;
-            document.getElementById('scan-form').submit();
-            html5QrcodeScanner.clear();
+            // Cek jika scanner masih aktif sebelum submit
+            if (document.getElementById('scan-form')) {
+                document.getElementById('qr-code-result').value = decodedText;
+                document.getElementById('scan-form').submit();
+                
+                // Hentikan scanner
+                html5QrcodeScanner.clear().catch(err => {
+                    console.warn("Gagal membersihkan html5QrcodeScanner: ", err);
+                });
+            }
         }
 
         function onScanError(errorMessage) {
             // ignored
         }
 
-        var html5QrcodeScanner = new Html5QrcodeScanner(
-            "qr-reader",
-            { fps: 10, qrbox: 260 }
-        );
-
-        html5QrcodeScanner.render(onScanSuccess, onScanError);
+        // Buat variabel scanner di scope yang lebih luas
+        var html5QrcodeScanner;
+        
+        // Pastikan DOM sudah siap
+        document.addEventListener('DOMContentLoaded', (event) => {
+            if (document.getElementById('qr-reader')) {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "qr-reader",
+                    { fps: 10, qrbox: 260 }
+                );
+                html5QrcodeScanner.render(onScanSuccess, onScanError);
+            }
+        });
     </script>
     @endpush
 

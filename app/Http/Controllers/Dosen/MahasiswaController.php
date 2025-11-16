@@ -5,7 +5,8 @@ use App\Models\Mahasiswa;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Imports\MahasiswaImport; 
+use App\Imports\MahasiswaImport;
+use App\Models\Dosen;
 use Maatwebsite\Excel\Facades\Excel; 
 use Illuminate\Support\Facades\Hash;
 use App\Models\Kelas;
@@ -60,60 +61,64 @@ class MahasiswaController extends Controller
 
         return back()->with('success', 'Password untuk ' . $user->name . ' berhasil di-reset.');
     }
- public function storeManual(Request $request)
-    {
-        // ... (Validasi Anda sudah benar) ...
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'nim' => 'required|string|unique:mahasiswa,nim',
-            'email' => 'required|email|unique:users,email',
-            'prodi' => 'required|string|max:255',
-            'angkatan' => 'required|numeric|digits:4',
-            'nama_kelas' => 'required|string|max:255',
+public function storeManual(Request $request)
+{
+    // VALIDASI DASAR (tidak memakai unique)
+    $request->validate([
+        'nama' => 'required|string|max:255',
+        'nim' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'prodi' => 'required|string|max:255',
+        'angkatan' => 'required|numeric|digits:4',
+        'nama_kelas' => 'required|string|max:255',
+    ]);
+
+    // CEK DUPLIKAT NIM
+    if (Mahasiswa::where('nim', $request->nim)->exists()) {
+        return back()->with('error', 'NIM "' . $request->nim . '" sudah terdaftar.');
+    }
+
+    // CEK DUPLIKAT EMAIL
+    if (User::where('email', $request->email)->exists()) {
+        return back()->with('error', 'Email "' . $request->email . '" sudah digunakan.');
+    }
+
+    try {
+
+        // Bersihkan nama kelas → uppercase (TI-4A)
+        $kelasName = strtoupper($request->nama_kelas);
+
+        // 1. KELAS
+        $kelas = Kelas::firstOrCreate(
+            ['nama_kelas' => $kelasName],
+            ['nama_kelas' => $kelasName]
+        );
+
+        // 2. AKUN USER
+        $user = User::create([
+            'name' => $request->nama,
+            'email' => $request->email,
+            'role' => 'mahasiswa',
+            'password' => Hash::make('password'),
+            'must_change_password' => true,
         ]);
 
-        try {
-            // 1. Ambil SEMUA ID mata kuliah
-            // $allMatkulIds = \App\Models\Matkul::pluck('id')->toArray();
+        // 3. PROFIL MAHASISWA
+        Mahasiswa::create([
+            'user_id' => $user->id,
+            'nama' => $request->nama,
+            'nim' => $request->nim,
+            'prodi' => $request->prodi,
+            'angkatan' => $request->angkatan,
+            'kelas_id' => $kelas->id,
+        ]);
 
-            // 2. Dapatkan atau Buat Kelas Baru
-            $kelas = Kelas::firstOrCreate(
-                ['nama_kelas' => $request->nama_kelas],
-                ['nama_kelas' => $request->nama_kelas]
-            );
+        return back()->with('success', 'Mahasiswa "' . $request->nama . '" berhasil ditambahkan.');
 
-            // 3. Buat Akun User (Login)
-            $user = User::firstOrCreate(
-                ['email' => $request->email], 
-                [
-                    'name' => $request->nama,
-                    'role' => 'mahasiswa',
-                    'password' => Hash::make('password'),
-                    'must_change_password' => true,
-                ]
-            );
-
-            // 4. Buat Profil Mahasiswa (Biodata)
-            $mahasiswa = Mahasiswa::firstOrCreate(
-                ['nim' => $request->nim], 
-                [
-                    'user_id' => $user->id,
-                    'nama' => $request->nama,
-                    'angkatan' => $request->angkatan,
-                    'prodi' => $request->prodi,
-                    'kelas_id' => $kelas->id,
-                ]
-            );
-
-            // 5. === INI PERBAIKANNYA ===
-            // Daftarkan (enroll) mahasiswa ini ke SEMUA mata kuliah
-            // $mahasiswa->matkul()->sync($allMatkulIds);
-            // ==========================
-
-            return back()->with('success', 'Mahasiswa "' . $request->nama . '" berhasil ditambahkan.');
-
-        } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+    } catch (\Exception $e) {
+        return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
+}
+
+
 }

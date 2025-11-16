@@ -8,96 +8,130 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            {{-- ================= FORM MANUAL ================= --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-lg font-medium mb-4">Tambah Mahasiswa Manual</h3>
 
-                    <form action="{{ route('dosen.mahasiswa.store.manual') }}" method="POST">
+                    <form id="formManualCreate" action="{{ route('dosen.mahasiswa.store.manual') }}" method="POST">
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                             <div>
-                                <x-input-label for="nama" :value="__('Nama Lengkap')" />
-                                <x-text-input id="nama" class="block mt-1 w-full" type="text" name="nama" :value="old('nama')" required />
+                                <x-input-label for="nama" :value="'Nama Lengkap'" />
+                                <x-text-input id="nama"
+                                              class="block mt-1 w-full"
+                                              type="text" name="nama"
+                                              value="{{ old('nama') }}" required />
                             </div>
+
                             <div>
-                                <x-input-label for="nim" :value="__('NIM (Nomor Induk Mahasiswa)')" />
-                                <x-text-input id="nim" class="block mt-1 w-full" type="text" name="nim" :value="old('nim')" required />
+                                <x-input-label for="nim" :value="'NIM'" />
+                                <x-text-input id="nim"
+                                              class="block mt-1 w-full"
+                                              type="text" name="nim"
+                                              value="{{ old('nim') }}" required />
                             </div>
+
                             <div>
-                                <x-input-label for="email" :value="__('Email (untuk Login)')" />
-                                <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required />
+                                <x-input-label for="email" :value="'Email'" />
+                                <x-text-input id="email"
+                                              class="block mt-1 w-full"
+                                              type="email" name="email"
+                                              value="{{ old('email') }}" required />
                             </div>
+
                             <div>
-                                <x-input-label for="prodi" :value="__('Program Studi')" />
-                                <x-text-input id="prodi" class="block mt-1 w-full" type="text" name="prodi" :value="old('prodi', 'Teknik Informatika')" required />
+                                <x-input-label for="prodi" :value="'Program Studi'" />
+                                <x-text-input id="prodi"
+                                              class="block mt-1 w-full"
+                                              type="text" name="prodi"
+                                              value="{{ old('prodi', 'Teknik Informatika') }}" required />
                             </div>
+
                             <div>
-                                <x-input-label for="angkatan" :value="__('Tahun Angkatan')" />
-                                <x-text-input id="angkatan" class="block mt-1 w-full" type="number" name="angkatan" :value="old('angkatan', date('Y'))" required />
+                                <x-input-label for="angkatan" :value="'Tahun Angkatan'" />
+                                <x-text-input id="angkatan"
+                                              class="block mt-1 w-full"
+                                              type="number" name="angkatan"
+                                              value="{{ old('angkatan', date('Y')) }}" required />
                             </div>
+
                             <div>
-                                <x-input-label for="nama_kelas" :value="__('Nama Kelas (Otomatis dibuat jika baru)')" />
-                                <x-text-input id="nama_kelas" class="block mt-1 w-full" type="text" name="nama_kelas" :value="old('nama_kelas')" placeholder="Contoh: TI-4A" required />
+                                <x-input-label for="nama_kelas" :value="'Nama Kelas'" />
+                                <x-text-input id="nama_kelas"
+                                              class="block mt-1 w-full uppercase"
+                                              type="text" name="nama_kelas"
+                                              value="{{ old('nama_kelas') }}"
+                                              placeholder="Contoh: TI-4A" required />
                             </div>
+
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
                             <x-primary-button>
-                                {{ __('Simpan Mahasiswa Baru') }}
+                                Simpan Mahasiswa Baru
                             </x-primary-button>
                         </div>
                     </form>
                 </div>
             </div>
-            @if (session('success'))
-                <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
-                    {{ session('success') }}
-                </div>
+
+            {{-- SWEETALERT ERROR MESSAGE --}}
+            @if ($errors->any())
+                <script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal!',
+                        html: '{!! implode("<br>", $errors->all()) !!}',
+                    });
+                </script>
             @endif
-            @if (session('error'))
-                <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
-                    {{ session('error') }}
-                </div>
-            @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-medium mb-4">Import Data Mahasiswa</h3>
+      @if (session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        html: `{!! session('success') !!}`,
+        confirmButtonColor: '#3085d6',
+    });
+</script>
+@endif
 
-                    <form action="{{ route('dosen.mahasiswa.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div>
-                            <x-input-label for="file_mahasiswa" :value="__('File Excel (.xlsx, .xls)')" />
-                            <x-text-input id="file_mahasiswa" class="block mt-1 w-full" type="file" name="file_mahasiswa" required />
-                            <x-input-error :messages="$errors->get('file_mahasiswa')" class="mt-2" />
-                        </div>
+@if (session('error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        html: `{!! session('error') !!}`,
+        confirmButtonColor: '#d33',
+    });
+</script>
+@endif
 
-                        <div class="flex items-center justify-end mt-4">
-                            <x-primary-button>
-                                {{ __('Import') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-medium mb-4">Petunjuk Format File Excel</h3>
-                    <p class="mb-2">Pastikan file Excel Anda memiliki *header* (baris pertama) dengan nama kolom **persis** sebagai berikut (huruf kecil semua):</p>
-                    <ul class="list-disc list-inside">
-                        <li><strong>nama</strong> (Contoh: Udin Saputra)</li>
-                        <li><strong>email</strong> (Contoh: udin.saputra@example.com)</li>
-                        <li><strong>nim</strong> (Contoh: 20221001)</li>
-                        <li><strong>angkatan</strong> (Contoh: 2022)</li>
-                        <li><strong>prodi</strong> (Contoh: Teknik Informatika)</li>
-                        <li><strong>kelas</strong> (Contoh: TI-2024-KIP-C1) </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="mt-8">
-                @livewire('dosen.mahasiswa-table')
-            </div>
+            {{-- ==================== SWEETALERT KONFIRMASI ==================== --}}
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+            <script>
+                document.querySelector('#formManualCreate').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Simpan data ini?',
+                        text: "Pastikan semua data sudah benar.",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Simpan',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            e.target.submit();
+                        }
+                    })
+                });
+            </script>
+
         </div>
     </div>
 </x-app-layout>

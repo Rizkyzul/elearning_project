@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
 use App\Models\Matkul;
+use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\NilaiPerMatkulExport;
@@ -12,39 +13,67 @@ use Illuminate\Support\Facades\Auth;
 
 class NilaiController extends Controller
 {
+    /**
+     * Tampilkan halaman 'Pilih Kelas' untuk Penilaian.
+     */
     public function index(Matkul $matkul)
     {
+        // Ambil semua kelas yang terhubung dengan matkul ini
+        // (melalui materi atau tugas)
+        $kelasIds = $matkul->materi()->with('kelas')->get()->pluck('kelas.*.id')->flatten()
+                    ->merge($matkul->tugas()->with('kelas')->get()->pluck('kelas.*.id')->flatten())
+                    ->unique();
+        
+        $daftarKelas = Kelas::whereIn('id', $kelasIds)->orderBy('nama_kelas')->get();
+
         return view('dosen.nilai.index', [
-            'matkul' => $matkul
+            'matkul' => $matkul,
+            'daftarKelas' => $daftarKelas
         ]);
     }
 
-    public function exportExcel(Matkul $matkul)
+    /**
+     * Tampilkan halaman Gradebook (Livewire) untuk kelas yang dipilih.
+     */
+    public function showKelas(Matkul $matkul, Kelas $kelas)
     {
-        $filename = 'Nilai_' . $matkul->kode_matkul . '_' . now()->timestamp . '.xlsx';
-
-        return Excel::download(new NilaiPerMatkulExport($matkul), $filename);
+        return view('dosen.nilai.show-kelas', [
+            'matkul' => $matkul,
+            'kelas' => $kelas
+        ]);
     }
 
-    public function exportPdf(Matkul $matkul)
+    /**
+     * Handle export Excel (filter per kelas).
+     */
+    public function exportExcel(Matkul $matkul, Kelas $kelas)
+    {
+        $namaFile = 'Nilai_' . $matkul->kode_matkul . '_' . $kelas->nama_kelas . '_' . now()->timestamp . '.xlsx';
+        return Excel::download(new NilaiPerMatkulExport($matkul, $kelas), $namaFile);
+    }
+
+    /**
+     * Handle export PDF (filter per kelas).
+     */
+    public function exportPdf(Matkul $matkul, Kelas $kelas)
     {
         $dosen = Auth::user()->dosenProfile;
-        $dosen?->load('user'); // aman dari null
+        $dosen->load('user');
 
         $nilaiList = $matkul->nilai()
-            ->with('mahasiswa.user')
-            ->get();
-
+                           ->whereHas('mahasiswa', function ($q) use ($kelas) {
+                               $q->where('kelas_id', $kelas->id);
+                           })
+                           ->with('mahasiswa.user')
+                           ->get();
+        
         $data = [
-            'matkul' => $matkul,
-            'dosen' => $dosen,
-            'nilaiList' => $nilaiList,
+            'matkul' => $matkul, 'kelas' => $kelas,
+            'dosen' => $dosen, 'nilaiList' => $nilaiList,
         ];
-
+        
         $pdf = Pdf::loadView('dosen.nilai.pdf', $data);
-
-        $filename = 'Nilai_' . $matkul->kode_matkul . '_' . now()->timestamp . '.pdf';
-
-        return $pdf->download($filename);
+        $namaFile = 'Nilai_' . $matkul->kode_matkul . '_' . $kelas->nama_kelas . '_' . now()->timestamp . '.pdf';
+        return $pdf->download($namaFile);
     }
 }

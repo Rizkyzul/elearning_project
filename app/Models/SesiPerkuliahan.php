@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class SesiPerkuliahan extends Model
 {
     use HasFactory;
-
-    // --- TAMBAHKAN BARIS INI ---
+    
+  
     protected $guarded = [];
     // -------------------------
 
     protected $table = 'sesi_perkuliahan';
 
-    // Casts (Opsional tapi bagus untuk timer)
+    // Casts (Penting untuk timer)
     protected $casts = [
         'expires_at_masuk' => 'datetime',
         'expires_at_keluar' => 'datetime',
@@ -29,6 +29,11 @@ class SesiPerkuliahan extends Model
     public function dosen()
     {
         return $this->belongsTo(Dosen::class);
+    }
+
+    public function kelas() // <-- Tambahkan relasi ini
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     public function absensi()

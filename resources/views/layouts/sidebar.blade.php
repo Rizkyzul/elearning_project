@@ -7,12 +7,25 @@
                   d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18c-2.305 0-4.408.867-6 2.292m0-14.25v14.25">
             </path>
         </svg>
-        <span class="tracking-tight">E-Learning</span>
+        <span class="tracking-tight">E-Learning
+        </span>
     </h2>
 
-    <nav class="flex-1 mt-4">
-        <h3 class="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Menu Utama</h3>
+        <nav class="flex-1 mt-4">
+            <h3 class="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Menu Utama</h3>
 
+            @if(Auth::user()->role == 'superadmin')
+            <a href="{{ route('superadmin.dosen.create') }}"
+            class="flex items-center px-3 py-2.5 mb-2 text-gray-700 rounded-lg ... {{ request()->routeIs('superadmin.dosen.*') ? 'bg-blue-200 font-semibold text-blue-800' : '' }}">
+                <span class="mr-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </span>
+                <span>Akun Dosen (Admin)</span>
+            </a>
+
+            <hr class="my-4">
+        @endif
+        
         @if(Auth::user()->role == 'dosen')
             
             <a href="{{ route('dosen.dashboard') }}"
@@ -38,7 +51,14 @@
                 </span>
                 <span>Manajemen Mahasiswa</span>
             </a>
-            
+            <a href="{{ route('dosen.matkul.index') }}"
+                class="flex items-center px-3 py-2.5 mb-2 text-gray-700 rounded-lg transition duration-200 ease-in-out hover:bg-blue-100 hover:text-blue-700 {{ request()->routeIs('dosen.matkul.*') ? 'bg-blue-200 font-semibold text-blue-800' : '' }}">
+                    <span class="mr-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18c-2.305 0-4.408.867-6 2.292m0-14.25v14.25"></path></svg>
+                    </span>
+                    <span>Manajemen Mata Kuliah</span>
+            </a>
+         
         @elseif(Auth::user()->role == 'mahasiswa')
             
             <a href="{{ route('mahasiswa.dashboard') }}"
