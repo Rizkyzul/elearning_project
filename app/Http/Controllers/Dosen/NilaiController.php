@@ -32,14 +32,28 @@ class NilaiController extends Controller
         ]);
     }
 
-    /**
-     * Tampilkan halaman Gradebook (Livewire) untuk kelas yang dipilih.
-     */
-    public function showKelas(Matkul $matkul, Kelas $kelas)
+public function showKelas(Matkul $matkul, Kelas $kelas)
     {
+        // --- STATISTIK BARU ---
+        // Ambil semua nilai akhir untuk kelas & matkul ini
+        $semuaNilaiAkhir = $matkul->nilai()
+                                ->whereHas('mahasiswa', function ($q) use ($kelas) {
+                                    $q->where('kelas_id', $kelas->id);
+                                })
+                                ->whereNotNull('nilai_akhir') // Hanya yg sudah di-grade
+                                ->pluck('nilai_akhir');
+
+        $statistik = [
+            'rata_rata_kelas' => $semuaNilaiAkhir->count() > 0 ? round($semuaNilaiAkhir->avg(), 2) : 0,
+            'sudah_dinilai' => $semuaNilaiAkhir->count(),
+            'total_mahasiswa' => $kelas->mahasiswa()->count()
+        ];
+        // --- AKHIR STATISTIK ---
+        
         return view('dosen.nilai.show-kelas', [
             'matkul' => $matkul,
-            'kelas' => $kelas
+            'kelas' => $kelas,
+            'statistik' => $statistik // <-- Kirim data baru
         ]);
     }
 

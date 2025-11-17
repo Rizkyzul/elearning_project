@@ -8,14 +8,33 @@
     <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 
-                <x-matkul-tabs :matkul="$matkul" />
-
+                <x-matkul-tabs :matkul="$matkul" :kelasId="$kelas->id" />
+                
                 <div class="mb-4">
                     <a href="{{ route('dosen.nilai.index', $matkul) }}" class="text-sm text-gray-600 hover:text-gray-900">
                         &larr; Kembali ke Pilihan Kelas
                     </a>
                 </div>
 
+                <div class="mb-6 bg-white shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-semibold mb-4">Statistik Nilai (Kelas Ini)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-4 bg-gray-50 rounded-lg text-center border">
+                                <span class="text-2xl font-bold text-indigo-600">{{ $statistik['total_mahasiswa'] }}</span>
+                                <span class="block text-sm text-gray-500">Total Mahasiswa</span>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded-lg text-center border">
+                                <span class="text-2xl font-bold text-green-600">{{ $statistik['sudah_dinilai'] }}</span>
+                                <span class="block text-sm text-gray-500">Mahasiswa Tuntas Dinilai</span>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded-lg text-center border">
+                                <span class="text-2xl font-bold text-blue-600">{{ $statistik['rata_rata_kelas'] }}</span>
+                                <span class="block text-sm text-gray-500">Rata-rata Nilai Kelas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="mb-4 flex gap-4">
                     <a href="{{ route('dosen.nilai.export.excel', ['matkul' => $matkul, 'kelas' => $kelas]) }}" 
                        class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">

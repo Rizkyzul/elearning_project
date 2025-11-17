@@ -30,6 +30,11 @@
                             <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required />
                             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                         </div>
+                        <h3 class="max-w-2xl mx-auto  text-sm text-red-600">
+                            *Password baru tidak boleh sama dengan password lama.
+                            <br>
+                            Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.
+                        </h3>
                         <div class="flex items-center justify-end mt-4">
                             <x-primary-button>
                                 {{ __('Update Password') }}
@@ -40,4 +45,5 @@
             </div>
         </div>
     </div>
+    
 </x-app-layout>

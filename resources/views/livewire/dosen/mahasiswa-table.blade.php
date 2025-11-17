@@ -45,8 +45,10 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIM</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prodi</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Angkatan</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prodi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Angkatan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -55,15 +57,21 @@
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->nim }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->user->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->user->email }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->prodi }}</td> <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->kelas->nama_kelas ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->angkatan }}</td> <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <form action="{{ route('dosen.mahasiswa.reset', $mahasiswa) }}" method="POST" onsubmit="return confirm('Yakin ingin reset password mahasiswa ini?');">
-                                        @csrf
-                                        <button type="submit" class="text-yellow-600 hover:text-yellow-900">
+                                <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->prodi }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->kelas->nama_kelas ?? '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ $mahasiswa->angkatan }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    
+                                    <form action="{{ route('dosen.mahasiswa.reset', $mahasiswa) }}" method="POST" 
+                                          class="form-reset-password"> @csrf
+                                        
+                                        <button type="submit" 
+                                                data-nama="{{ $mahasiswa->user->name }}"
+                                                class="btn-reset-password text-yellow-600 hover:text-yellow-900">
                                             Reset Password
                                         </button>
                                     </form>
-                                </td>
+                                    </td>
                             </tr>
                         @empty
                             <tr>
@@ -82,4 +90,57 @@
 
         </div>
     </div>
-</div>
+
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        
+        <script>
+            // Pastikan script berjalan setelah halaman (termasuk Livewire) siap
+            document.addEventListener('livewire:navigated', function () {
+                
+                // Cari SEMUA tombol reset
+                const resetButtons = document.querySelectorAll('.btn-reset-password');
+                
+                resetButtons.forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        // Hentikan aksi default (submit)
+                        e.preventDefault(); 
+                        
+                        // Ambil form terdekat
+                        const form = e.target.closest('form');
+                        // Ambil nama dari data-nama
+                        const nama = e.target.dataset.nama;
+
+                        Swal.fire({
+                            title: 'Reset Password?',
+                            text: `Anda yakin ingin me-reset password untuk ${nama}?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#eab308', // Yellow
+                            cancelButtonColor: '#d33', // Merah
+                            confirmButtonText: 'Ya, Reset!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Jika dikonfirmasi, submit form-nya
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+
+                // 3. Script untuk Menampilkan Notifikasi 'success'
+                // (Ini akan mengambil notifikasi dari controller 'storeManual' atau 'store' juga)
+                @if (session('success'))
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: '{{ session('success') }}',
+                        icon: 'success',
+                        confirmButtonColor: '#2563eb' // Biru
+                    });
+                @endif
+                
+            });
+        </script>
+    @endpush
+    </div>

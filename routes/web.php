@@ -90,7 +90,10 @@ Route::middleware(['auth'])->group(function () {
             
             Route::get('absensi', [DosenAbsensiController::class, 'index'])->name('absensi.index');
             Route::get('absensi/sesi/{sesi}', [DosenAbsensiController::class, 'show'])->name('absensi.show');
-        });
+       
+            Route::get('absensi/sesi/{sesi}/export-excel', [DosenAbsensiController::class, 'exportExcel'])->name('absensi.export.excel');
+            Route::get('absensi/sesi/{sesi}/export-pdf', [DosenAbsensiController::class, 'exportPdf'])->name('absensi.export.pdf');
+                });
     });
 
     Route::middleware(['role:mahasiswa'])->prefix('mahasiswa')->name('mahasiswa.')->group(function () {

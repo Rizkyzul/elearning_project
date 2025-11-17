@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 
 class PasswordChangeController extends Controller
 {
@@ -15,21 +15,31 @@ class PasswordChangeController extends Controller
 
     public function update(Request $request)
     {
-        $user = $request->user();
-
         $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'different:current_password',
+                'regex:/[a-z]/',      // huruf kecil
+                'regex:/[A-Z]/',      // huruf besar
+                'regex:/[0-9]/',      // angka
+                'regex:/[^A-Za-z0-9]/' // simbol
+            ]
+        ], [
+            'password.different' => 'Password baru tidak boleh sama dengan password lama.',
+            'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
         ]);
+
+        $user = auth()->user();
 
         $user->update([
             'password' => Hash::make($request->password),
-            'must_change_password' => false
+            'must_change_password' => false,
         ]);
 
-        $redirectRoute = $user->role === 'dosen' ? 'dosen.dashboard' : 'mahasiswa.dashboard';
-
-        return redirect()->route($redirectRoute)
-                         ->with('success', 'Password berhasil diperbarui!');
+        return redirect('/')
+            ->with('success', 'Password berhasil diperbarui.');
     }
 }
