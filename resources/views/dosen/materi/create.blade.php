@@ -85,9 +85,30 @@
                             }
                         </script>
 
-                        <div class="mt-4">
+                        <div class="mt-4" x-data="{ fileSizeError: false, fileName: '' }">
                             <x-input-label for="file_materi" :value="__('File Materi (PDF, PPT, DOC, ZIP - Maks 20MB)')" />
-                            <x-text-input id="file_materi" class="block mt-1 w-full" type="file" name="file_materi" required />
+                            
+                            <input id="file_materi" 
+                                   class="block mt-1 w-full border border-gray-300 rounded-md shadow-sm p-2" 
+                                   type="file" 
+                                   name="file_materi" 
+                                   required
+                                   @change="
+                                        const file = $event.target.files[0];
+                                        if (file) {
+                                            // 20MB = 20 * 1024 * 1024 = 20971520 bytes
+                                            if (file.size > 20971520) {
+                                                fileSizeError = '⚠️ File terlalu besar! Ukuran file Anda: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB. Maksimal 20MB.';
+                                                $event.target.value = ''; // Reset input (hapus file)
+                                            } else {
+                                                fileSizeError = false;
+                                            }
+                                        }
+                                   "
+                            />
+
+                            <p x-show="fileSizeError" x-text="fileSizeError" class="mt-2 text-sm text-red-600 font-bold"></p>
+
                             <x-input-error :messages="$errors->get('file_materi')" class="mt-2" />
                         </div>
 

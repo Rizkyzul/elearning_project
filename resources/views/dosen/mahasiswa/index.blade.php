@@ -94,7 +94,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-lg font-medium mb-4">Petunjuk Format File Excel</h3>
-                    <p class="mb-2">Pastikan file Excel Anda memiliki *header* (baris pertama) dengan nama kolom **persis** sebagai berikut (huruf kecil semua):</p>
+                    <p class="mb-2">Pastikan file Excel Anda memiliki <strong>Header</strong> (baris pertama) dengan nama kolom <strong>persis</strong> sebagai berikut (huruf kecil semua):</p>
                     <ul class="list-disc list-inside text-sm">
                         <li><strong>nama</strong> (Contoh: Udin Saputra)</li>
                         <li><strong>email</strong> (Contoh: udin.saputra@example.com)</li>

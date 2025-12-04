@@ -24,7 +24,7 @@ class TugasController extends Controller
 
         // Ambil tugas DAN relasi kelasnya (Eager Loading)
         $tugasList = $matkul->tugas()
-                            ->with('kelas') // <-- PENTING: Ambil relasi kelas
+                            ->with('kelas') 
                             ->withCount('jawaban')
                             ->orderBy('deadline', 'asc')
                             ->get();
